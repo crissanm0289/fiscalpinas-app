@@ -211,7 +211,10 @@ elif opcion == "MÓDULO 2: DASHBOARD (Reporte)":
     dibujar_ficha_tecnica()
     df = st.session_state['data_fiscalpinas']
     
-    # Ignorar la fila 'Inicio' para los gráficos, si hay más datos
+    # IMPORTANTE: Definimos la variable 'ultimo' aquí para evitar el NameError
+    ultimo = df.iloc[-1]
+
+    # Preparamos dataframe para gráficos (excluyendo el dia 0 inicial si hay datos reales)
     if len(df) > 1:
         df_real = df.iloc[1:].copy()
     else:
@@ -228,19 +231,58 @@ elif opcion == "MÓDULO 2: DASHBOARD (Reporte)":
         'Horas Hombre': "{:.1f}"
     }), use_container_width=True, height=200)
 
-    st.markdown("---")
+    st.markdown("---") # LÍNEA DIVISORIA
+
+    # --- FILA 1: GRÁFICOS NUEVOS SOLICITADOS ---
+    c_new1, c_new2 = st.columns(2)
     
-    # --- FILA 1 ---
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown("**3. Gráfico de Avance de Pagos (Acumulado $)**")
-        # CORRECCIÓN AQUÍ: Se eliminó fill_color='...' y se usó fillcolor='...'
+    with c_new1:
+        st.subheader("3. Resumen de avance Global Acumulado")
+        # Gráfico de Área (Curva S Física)
+        fig_global = px.area(df, x='Fecha', y='Físico Acum (%)', title="Curva 'S' - Avance Físico")
+        fig_global.update_traces(line_color='#1E3A8A', fillcolor='rgba(30, 58, 138, 0.3)') # Sintaxis corregida
+        st.plotly_chart(fig_global, use_container_width=True)
+    
+    with c_new2:
+        st.subheader("4. Avance físico total por mes")
+        # Agrupación por mes
+        df_real['Mes'] = pd.to_datetime(df_real['Fecha']).dt.strftime('%Y-%m')
+        df_mes_fis = df_real.groupby('Mes')['Físico Diario (%)'].sum().reset_index()
+        
+        fig_mes_fis = px.bar(df_mes_fis, x='Mes', y='Físico Diario (%)', title="Producción Física Mensual (%)", text_auto='.2f')
+        fig_mes_fis.update_traces(marker_color='#b91c1c')
+        st.plotly_chart(fig_mes_fis, use_container_width=True)
+
+    st.markdown("---") # LÍNEA DIVISORIA
+
+    # --- FILA 2: VALOR GANADO Y PAGOS ---
+    c3, c4 = st.columns(2)
+    
+    with c3:
+        st.subheader("5. Curva de Avance de obra – Valor Ganado")
+        fig_ev = go.Figure()
+        # Línea de Valor Ganado (EV)
+        fig_ev.add_trace(go.Scatter(x=df['Fecha'], y=df['Financiero Acum ($)'], name='Valor Ganado (EV)', 
+                         line=dict(color='green', width=3), mode='lines+markers'))
+        # Línea de Presupuesto (BAC) - Referencia
+        fig_ev.add_trace(go.Scatter(x=df['Fecha'], y=[MONTO_TOTAL_PROYECTO]*len(df), name='Presupuesto (BAC)', 
+                         line=dict(color='red', dash='dash')))
+        fig_ev.update_layout(yaxis_title="Monto USD ($)", legend=dict(orientation="h", y=1.1))
+        st.plotly_chart(fig_ev, use_container_width=True)
+
+    with c4:
+        st.subheader("6. Gráfico de Avance de Pagos (Acumulado $)")
         fig_pagos = px.area(df, x='Fecha', y='Financiero Acum ($)', markers=True)
-        fig_pagos.update_traces(line_color='green', fillcolor='rgba(0,128,0,0.2)')
+        fig_pagos.update_traces(line_color='green', fillcolor='rgba(0,128,0,0.2)') # Sintaxis corregida
         st.plotly_chart(fig_pagos, use_container_width=True)
 
-    with c2:
-        st.markdown("**4. Gráfico de Avance Porcentual vs USD (Doble Eje)**")
+    st.markdown("---") # LÍNEA DIVISORIA
+
+    # --- FILA 3: COMPARATIVAS Y PAGOS MENSUALES ---
+    c5, c6 = st.columns(2)
+
+    with c5:
+        st.subheader("7. Avance Porcentual vs USD (Doble Eje)")
         fig_dual = go.Figure()
         fig_dual.add_trace(go.Bar(x=df['Fecha'], y=df['Inversión Diaria ($)'], name='Inversión ($)', marker_color='#90cdf4'))
         fig_dual.add_trace(go.Scatter(x=df['Fecha'], y=df['Físico Acum (%)'], name='% Acumulado', yaxis='y2', line=dict(color='#b91c1c', width=3)))
@@ -251,35 +293,35 @@ elif opcion == "MÓDULO 2: DASHBOARD (Reporte)":
         )
         st.plotly_chart(fig_dual, use_container_width=True)
 
-    # --- FILA 2 ---
-    c3, c4 = st.columns(2)
-    with c3:
-        st.markdown("**5. Pagos Mensuales y Devengo de Anticipo**")
-        df_real['Mes'] = pd.to_datetime(df_real['Fecha']).dt.strftime('%Y-%m')
-        df_mes = df_real.groupby('Mes')['Inversión Diaria ($)'].sum().reset_index()
-        
-        fig_mes = px.bar(df_mes, x='Mes', y='Inversión Diaria ($)', text_auto='.2s', title="Planillado Mensual")
-        fig_mes.add_hline(y=df_mes['Inversión Diaria ($)'].mean(), line_dash="dot", annotation_text="Promedio")
-        st.plotly_chart(fig_mes, use_container_width=True)
+    with c6:
+        st.subheader("8. Pagos Mensuales y Devengo")
+        # Usamos el dataframe agrupado por mes calculado anteriormente, pero sumando Dinero
+        df_mes_din = df_real.groupby('Mes')['Inversión Diaria ($)'].sum().reset_index()
+        fig_mes_din = px.bar(df_mes_din, x='Mes', y='Inversión Diaria ($)', text_auto='.2s', title="Planillado Mensual ($)")
+        st.plotly_chart(fig_mes_din, use_container_width=True)
 
-    with c4:
-        st.markdown("**6. Horas Hombre y Equipos (Acumulado)**")
-        fig_hh = px.line(df, x='Fecha', y='Horas Hombre', markers=True, title="Recurso Humano Diario")
+    st.markdown("---") # LÍNEA DIVISORIA
+
+    # --- FILA 4: RECURSOS Y SEGURIDAD ---
+    c7, c8 = st.columns(2)
+    with c7:
+        st.subheader("9. Horas Hombre y Equipos (Acumulado)")
         df['HH_Acum'] = df['Horas Hombre'].cumsum()
-        fig_hh.add_trace(go.Scatter(x=df['Fecha'], y=df['HH_Acum'], name='HH Acumuladas', fill='tozeroy', line=dict(dash='dot')))
+        fig_hh = px.line(df, x='Fecha', y='HH_Acum', markers=True, title="Horas Hombre Acumuladas")
+        fig_hh.add_trace(go.Scatter(x=df['Fecha'], y=df['HH_Acum'], fill='tozeroy', mode='none', fillcolor='rgba(100,100,100,0.2)', showlegend=False))
         st.plotly_chart(fig_hh, use_container_width=True)
 
-    # --- FILA 3 ---
-    c5, c6 = st.columns(2)
-    with c5:
-        st.markdown("**7. Frecuencia de Incidentes/Accidentes**")
+    with c8:
+        st.subheader("10. Frecuencia de Incidentes")
         conteo_inc = df_real['Incidentes'].value_counts().reset_index()
         conteo_inc.columns = ['Tipo', 'Cantidad']
         fig_seg = px.pie(conteo_inc, values='Cantidad', names='Tipo', hole=0.4, color_discrete_sequence=px.colors.qualitative.Safe)
         st.plotly_chart(fig_seg, use_container_width=True)
 
-    with c6:
-        st.markdown("**8. Estado de Contratos y Órdenes**")
-        st.info(f"**Contratos Complementarios:** {ultimo['Contratos Comp']}")
-        st.info(f"**Órdenes de Trabajo:** {ultimo['Ordenes Trabajo']}")
-        st.warning(f"**Incremento de Cantidades:** {ultimo['Incremento Cant']}")
+    st.markdown("---")
+    st.markdown("### Estado Administrativo")
+    # Ahora 'ultimo' está definido al principio del dashboard, por lo que esto ya no dará error
+    col_adm1, col_adm2, col_adm3 = st.columns(3)
+    col_adm1.info(f"**Contratos Complementarios:**\n{ultimo['Contratos Comp']}")
+    col_adm2.info(f"**Órdenes de Trabajo:**\n{ultimo['Ordenes Trabajo']}")
+    col_adm3.warning(f"**Incremento de Cantidades:**\n{ultimo['Incremento Cant']}")
