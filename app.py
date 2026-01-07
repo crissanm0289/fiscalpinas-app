@@ -5,16 +5,27 @@ import plotly.express as px
 from datetime import datetime, date
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(layout="wide", page_title="FISCALPIÑAS - GESTIÓN RDO", page_icon="🏗️")
+st.set_page_config(layout="wide", page_title="SISTEMA DE GESTIÓN - FISCALPIÑAS", page_icon="⚡")
 
-# --- VARIABLES DEL CONTRATO (EDITAR AQUÍ) ---
-MONTO_TOTAL_PROYECTO = 150000.00  # <--- COLOCAR EL MONTO EXACTO DEL CONTRATO AQUÍ
-NOMBRE_CONSORCIO = "CONSORCIO FISCALPIÑAS"
-OBJETO_CONTRATO = "Fiscalización y Construcción de Obras Civiles y Eléctricas"
+# --- VARIABLES DEL CONTRATO (ACTUALIZADAS) ---
+MONTO_TOTAL_PROYECTO = 3899999.22
+NOMBRE_FISCALIZADOR = "CONSORCIO FISCALPIÑAS"
 
-# --- GESTIÓN DE ESTADO (MEMORIA) ---
+# --- DATOS DE LA FICHA TÉCNICA ---
+datos_ficha = {
+    "Entidad": "CNEL EP - UNIDAD DE NEGOCIO EL ORO",
+    "Categoría": "CONSTRUCCIÓN DE SUBESTACIONES ELÉCTRICAS DE ALTA Y EXTRA ALTA TENSIÓN",
+    "Objeto": "EOR Construccion de la subestacion Pinas y su linea de subtransmision GD",
+    "Código": "LICO-CNELEP-2025-1",
+    "Plazo": "450 Días Calendario",
+    "Contratista": "CONSORCIO PIÑAS INPI",
+    "Rep_Legal": "PILEGGI CONSTRUCCIONES C.LTDA. (Procurador Común)",
+    "Monto_Str": "$ 3,899,999.22",
+    "Link": "https://www.compraspublicas.gob.ec/ProcesoContratacion/compras/PC/resumenAdjudicacion.cpe?solicitud=V_550at-6mzyMx9KwoPuuaByned8HAHsT3R-uscx9wE,"
+}
+
+# --- GESTIÓN DE MEMORIA (ESTADO) ---
 if 'data_fiscalpinas' not in st.session_state:
-    # Inicializamos con el día 0 (Inicio)
     st.session_state['data_fiscalpinas'] = pd.DataFrame({
         'Fecha': [date(2025, 1, 1)],
         'Día N': ['Inicio'],
@@ -39,222 +50,210 @@ def reset_app():
         del st.session_state['data_fiscalpinas']
     st.rerun()
 
-# --- ESTILOS CSS ---
+def dibujar_ficha_tecnica():
+    estilo_tabla = """
+    <style>
+        .ficha-tecnica {
+            width: 100%; border-collapse: collapse; margin-bottom: 20px; 
+            font-family: Arial, sans-serif; font-size: 13px; border: 1px solid #ddd;
+        }
+        .ficha-tecnica th {
+            background-color: #1E3A8A; color: white; padding: 8px; 
+            text-align: center; border: 1px solid #ddd; font-weight: bold;
+        }
+        .ficha-tecnica td {
+            padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; color: #333;
+        }
+        .label-cell { font-weight: bold; background-color: #eef2ff; width: 15%; }
+    </style>
+    """
+    
+    html_ficha = f"""
+    {estilo_tabla}
+    <table class="ficha-tecnica">
+        <tr><th colspan="4">FICHA TÉCNICA DEL PROYECTO (CONTRATO DE OBRA)</th></tr>
+        <tr>
+            <td class="label-cell">Entidad:</td>
+            <td width="35%">{datos_ficha['Entidad']}</td>
+            <td class="label-cell">Categoría:</td>
+            <td width="35%">{datos_ficha['Categoría']}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">Objeto:</td>
+            <td colspan="3">{datos_ficha['Objeto']}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">Código:</td>
+            <td>{datos_ficha['Código']}</td>
+            <td class="label-cell">Plazo:</td>
+            <td>{datos_ficha['Plazo']}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">Contratista:</td>
+            <td>{datos_ficha['Contratista']}</td>
+            <td class="label-cell">Rep. Legal:</td>
+            <td>{datos_ficha['Rep_Legal']}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">Monto:</td>
+            <td style="font-weight:bold; color:#b91c1c;">{datos_ficha['Monto_Str']}</td>
+            <td class="label-cell">Enlace:</td>
+            <td><a href="{datos_ficha['Link']}" target="_blank">Ver en SERCOP</a></td>
+        </tr>
+    </table>
+    """
+    st.markdown(html_ficha, unsafe_allow_html=True)
+
+# --- ESTILOS CSS GENERALES ---
 st.markdown("""
 <style>
-    .main-header {font-size: 26px; font-weight: bold; color: #b91c1c; text-align: center; margin-bottom: 20px;}
-    .sub-header {font-size: 18px; font-weight: bold; color: #1E3A8A; margin-top: 10px;}
-    .stTextInput label, .stNumberInput label, .stDateInput label, .stSelectbox label, .stTextArea label {
-        font-weight: bold !important; color: #333 !important;
-    }
-    .metric-card {background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 5px solid #b91c1c;}
+    .main-header {font-size: 24px; font-weight: bold; color: #1E3A8A; margin-bottom: 10px;}
+    .sub-header {font-size: 18px; font-weight: bold; color: #b91c1c; margin-top: 15px; border-bottom: 1px solid #ccc;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- SIDEBAR (BARRA LATERAL) ---
-st.sidebar.title("🏗️ MENÚ DE OBRA")
-st.sidebar.info(f"**Contratista:** {NOMBRE_CONSORCIO}")
+# --- SIDEBAR ---
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/e/e4/Logotipo_de_CNEL.svg", width=140)
+st.sidebar.title("MENÚ DE CONTROL")
+st.sidebar.info(f"**Fiscalización:**\n{NOMBRE_FISCALIZADOR}")
 
-opcion = st.sidebar.radio("Ir a:", ["RDO (Ingreso Diario)", "DASHBOARD (Reporte)"])
+opcion = st.sidebar.radio("Navegación:", ["MÓDULO 1: RDO (Ingreso)", "MÓDULO 2: DASHBOARD (Reporte)"])
 
 st.sidebar.markdown("---")
-if st.sidebar.button("🗑️ BORRAR TODOS LOS DATOS"):
+if st.sidebar.button("🗑️ RESETEAR DATOS"):
     reset_app()
 
 # ==============================================================================
-# MÓDULO: RDO (Puntos 6 al 20)
+# MÓDULO 1: RDO
 # ==============================================================================
-if opcion == "RDO (Ingreso Diario)":
-    st.markdown(f'<div class="main-header">REGISTRO DIARIO DE OBRA (RDO)</div>', unsafe_allow_html=True)
+if opcion == "MÓDULO 1: RDO (Ingreso)":
+    st.markdown('<div class="main-header">MÓDULO 1: REGISTRO DIARIO DE OBRA (RDO)</div>', unsafe_allow_html=True)
+    
+    # DIBUJAR FICHA TÉCNICA
+    dibujar_ficha_tecnica()
     
     df = st.session_state['data_fiscalpinas']
     ultimo = df.iloc[-1]
     prev_acum_fisico = ultimo['Físico Acum (%)']
     prev_acum_financiero = ultimo['Financiero Acum ($)']
 
-    st.warning("📝 Ingrese los datos del día. Los cálculos acumulados se harán automáticamente al guardar.")
-
     with st.form("formulario_rdo"):
-        
-        # --- BLOQUE 1: DATOS GENERALES ---
-        st.markdown('<div class="sub-header">A. Datos Generales y Económicos</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sub-header">A. Datos Generales</div>', unsafe_allow_html=True)
         c1, c2, c3 = st.columns(3)
-        in_fecha = c1.date_input("6. Fechas de Ejecución", date.today())
-        in_dia = c2.text_input("9. Día de ejecución", placeholder="Ej: Día 15")
-        in_clima = c3.selectbox("10. Condiciones climáticas", ["Soleado", "Nublado", "Lluvia", "Lluvia Fuerte"])
+        in_fecha = c1.date_input("1. Fechas de Ejecución", date.today())
+        in_dia = c2.text_input("9. Día de ejecución", placeholder="Ej: Día 120")
+        in_clima = c3.selectbox("10. Condiciones climáticas", ["Soleado", "Nublado", "Lluvia", "Tormenta"])
 
         c4, c5 = st.columns(2)
-        c4.text_input("7. Datos Económicos del Contrato", f"$ {MONTO_TOTAL_PROYECTO:,.2f}", disabled=True)
-        c5.text_input("8. Dato Económico total del Proyecto", f"$ {MONTO_TOTAL_PROYECTO:,.2f}", disabled=True)
+        c4.text_input("7. Datos Económicos del Contrato (Fiscalización)", "Variable según contrato", disabled=True)
+        c5.text_input("8. Dato Económico total del Proyecto (Obra)", datos_ficha['Monto_Str'], disabled=True)
 
-        # --- BLOQUE 2: AVANCE Y VALOR GANADO ---
-        st.markdown('<div class="sub-header">B. Control de Avance y Valor Ganado</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sub-header">B. Control de Avance</div>', unsafe_allow_html=True)
         
         col_av1, col_av2, col_av3 = st.columns(3)
-        in_monto_diario = col_av1.number_input("11. $ de Avance DEL DÍA (Inversión)", min_value=0.0, step=100.0)
+        in_monto_diario = col_av1.number_input("11. $ de Avance DEL DÍA (Inversión)", min_value=0.0, step=1000.0)
         
-        # Calculo automático de % diario basado en el monto ingresado
-        pct_diario_calc = (in_monto_diario / MONTO_TOTAL_PROYECTO) * 100 if MONTO_TOTAL_PROYECTO > 0 else 0
-        col_av2.metric("11. Curva de Avance % (Diario)", f"{pct_diario_calc:.2f} %")
-
-        # Calculo proyectado del acumulado para mostrar al usuario
+        # Cálculos automáticos visuales
+        pct_diario_calc = (in_monto_diario / MONTO_TOTAL_PROYECTO) * 100
         nuevo_acum_fin = prev_acum_financiero + in_monto_diario
+        
+        col_av2.metric("11. Curva de Avance % (Diario)", f"{pct_diario_calc:.4f} %")
         col_av3.metric("12. Avance Avaluado Acumulado ($)", f"$ {nuevo_acum_fin:,.2f}")
 
         st.markdown("**13. Avance prorrateado del proyecto por Hito**")
         ch1, ch2 = st.columns(2)
-        in_hito_civil = ch1.number_input("Hito Civil (%)", min_value=0.0, max_value=100.0, step=0.1)
-        in_hito_elec = ch2.number_input("Hito Eléctrico (%)", min_value=0.0, max_value=100.0, step=0.1)
+        in_hito_civil = ch1.number_input("Hito Civil (%)", min_value=0.0, max_value=100.0, step=0.01)
+        in_hito_elec = ch2.number_input("Hito Eléctrico (%)", min_value=0.0, max_value=100.0, step=0.01)
 
         st.markdown("**14. Indicadores de Desempeño y estimaciones**")
         ci1, ci2 = st.columns(2)
-        in_cpi = ci1.number_input("CPI (Costo Performance Index)", value=1.00, step=0.01)
-        in_spi = ci2.number_input("SPI (Schedule Performance Index)", value=1.00, step=0.01)
+        in_cpi = ci1.number_input("CPI (Costo)", value=1.00, step=0.01)
+        in_spi = ci2.number_input("SPI (Cronograma)", value=1.00, step=0.01)
 
-        # 15. Simbología (Gráfico Pequeño de Referencia)
-        st.markdown("**15. Curva de Avance – Valor Ganado (Referencia Visual)**")
-        fig_ref = go.Figure(go.Indicator(
-            mode = "gauge+number",
-            value = prev_acum_fisico + pct_diario_calc,
-            title = {'text': "% Físico Acumulado"},
-            gauge = {'axis': {'range': [None, 100]}, 'bar': {'color': "#b91c1c"}}
-        ))
-        fig_ref.update_layout(height=150, margin=dict(l=20, r=20, t=30, b=20))
-        st.plotly_chart(fig_ref, use_container_width=True)
+        st.markdown("**15. Curva de Avance – Simbología (Ref.)**")
+        st.progress(min(int(prev_acum_fisico + pct_diario_calc), 100))
 
-        # --- BLOQUE 3: DETALLE DE CAMPO ---
-        st.markdown('<div class="sub-header">C. Detalle Cualitativo</div>', unsafe_allow_html=True)
-        
-        in_activ = st.text_area("17. Actividades ejecutadas en el día", placeholder="- Excavación de plintos\n- Tendido de conductor...")
-        in_obs_fis = st.text_area("16. Observaciones de fiscalización", placeholder="Sin novedades...")
-        in_obs_gen = st.text_area("18. Observaciones Generales", placeholder="Material llegó a tiempo...")
+        st.markdown('<div class="sub-header">C. Detalle de Campo</div>', unsafe_allow_html=True)
+        in_activ = st.text_area("17. Actividades ejecutadas en el día", height=100)
+        in_obs_fis = st.text_area("16. Observaciones de fiscalización", height=70)
+        in_obs_gen = st.text_area("18. Observaciones Generales", height=70)
 
-        # --- BLOQUE 4: FOTOS Y FIRMAS ---
         st.markdown('<div class="sub-header">D. Cierre</div>', unsafe_allow_html=True)
         cf1, cf2 = st.columns(2)
         in_fotos = cf1.file_uploader("19. Registro fotográfico", accept_multiple_files=True)
-        in_firmas = cf2.text_input("20. Firmas de responsabilidad", placeholder="Ing. Residente / Ing. Fiscalizador")
+        in_firmas = cf2.text_input("20. Firmas de responsabilidad")
 
-        # BOTÓN DE GUARDADO
-        submitted = st.form_submit_button("💾 GUARDAR RDO")
+        submitted = st.form_submit_button("💾 GUARDAR REGISTRO")
 
         if submitted:
             if not in_dia or not in_activ or not in_firmas:
-                st.error("⚠️ Faltan campos obligatorios (Día, Actividades o Firmas).")
+                st.error("⚠️ Complete Día, Actividades y Firmas.")
             else:
-                # Cálculos Finales
                 pct_acum_final = prev_acum_fisico + pct_diario_calc
-                if pct_acum_final > 100: pct_acum_final = 100.0
-                
                 fin_acum_final = prev_acum_financiero + in_monto_diario
+                
+                # Tope lógico
                 if fin_acum_final > MONTO_TOTAL_PROYECTO: fin_acum_final = MONTO_TOTAL_PROYECTO
+                if pct_acum_final > 100.0: pct_acum_final = 100.0
 
-                # Crear nuevo registro
                 nuevo_registro = {
-                    'Fecha': in_fecha,
-                    'Día N': in_dia,
-                    'Físico Diario (%)': pct_diario_calc,
-                    'Inversión Diaria ($)': in_monto_diario,
-                    'Físico Acum (%)': pct_acum_final,
-                    'Financiero Acum ($)': fin_acum_final,
-                    'Hito Civil (%)': in_hito_civil,
-                    'Hito Eléctrico (%)': in_hito_elec,
-                    'CPI': in_cpi,
-                    'SPI': in_spi,
-                    'Detalle': in_activ,
-                    'Fotos': len(in_fotos) if in_fotos else 0
+                    'Fecha': in_fecha, 'Día N': in_dia,
+                    'Físico Diario (%)': pct_diario_calc, 'Inversión Diaria ($)': in_monto_diario,
+                    'Físico Acum (%)': pct_acum_final, 'Financiero Acum ($)': fin_acum_final,
+                    'Hito Civil (%)': in_hito_civil, 'Hito Eléctrico (%)': in_hito_elec,
+                    'CPI': in_cpi, 'SPI': in_spi,
+                    'Detalle': in_activ, 'Fotos': len(in_fotos) if in_fotos else 0
                 }
                 
-                # Guardar en Session State
                 st.session_state['data_fiscalpinas'] = pd.concat(
                     [df, pd.DataFrame([nuevo_registro])], ignore_index=True
                 )
-                st.success(f"✅ RDO del {in_dia} guardado correctamente.")
+                st.success("✅ RDO Guardado Exitosamente.")
 
 # ==============================================================================
-# MÓDULO: DASHBOARD (Puntos 1 al 5)
+# MÓDULO 2: DASHBOARD
 # ==============================================================================
-elif opcion == "DASHBOARD (Reporte)":
-    st.markdown(f'<div class="main-header">DASHBOARD DE SEGUIMIENTO</div>', unsafe_allow_html=True)
+elif opcion == "MÓDULO 2: DASHBOARD (Reporte)":
+    st.markdown('<div class="main-header">MÓDULO 2: DASHBOARD DE DESEMPEÑO</div>', unsafe_allow_html=True)
     
-    # CSS para impresión
-    st.markdown("""
-    <style>
-    @media print {
-        [data-testid="stSidebar"], .stButton, header, footer {display: none;}
-        .block-container {padding-top: 0 !important;}
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Estilo para ocultar cosas al imprimir
+    st.markdown("""<style>@media print {[data-testid="stSidebar"], .stButton, header, footer {display: none;}}</style>""", unsafe_allow_html=True)
 
+    # DIBUJAR FICHA TÉCNICA
+    dibujar_ficha_tecnica()
+    
     df = st.session_state['data_fiscalpinas']
-
-    # 1. FECHA DE EMISIÓN
+    
     st.markdown(f"**1. Fecha de emisión:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     st.markdown("---")
 
-    # 2. % DE AVANCE ACUMULADO POR COMPONENTES O HITOS
-    st.markdown("### 2. % de Avance Acumulado (Tabla Detallada)")
-    
-    if len(df) > 1:
-        ultimo = df.iloc[-1]
-        col_m1, col_m2, col_m3 = st.columns(3)
-        col_m1.metric("Avance Físico Global", f"{ultimo['Físico Acum (%)']:.2f}%")
-        col_m2.metric("Hito Civil", f"{ultimo['Hito Civil (%)']:.2f}%")
-        col_m3.metric("Hito Eléctrico", f"{ultimo['Hito Eléctrico (%)']:.2f}%")
-    else:
-        st.info("No hay datos registrados aún.")
-
+    # 2. TABLA DETALLADA
+    st.subheader("2. % de Avance Acumulado (Tabla)")
     st.dataframe(df[['Fecha', 'Día N', 'Físico Acum (%)', 'Financiero Acum ($)', 'CPI', 'SPI']].style.format({
-        'Físico Acum (%)': "{:.2f}%",
-        'Financiero Acum ($)': "$ {:,.2f}",
-        'CPI': "{:.2f}",
-        'SPI': "{:.2f}"
+        'Físico Acum (%)': "{:.4f}%", 'Financiero Acum ($)': "$ {:,.2f}", 'CPI': "{:.2f}", 'SPI': "{:.2f}"
     }), use_container_width=True)
 
-    st.markdown("---")
-
-    # GRÁFICOS
-    c_g1, c_g2 = st.columns(2)
-
-    with c_g1:
-        # 3. GRÁFICO DE RESUMEN DE AVANCE GLOBAL ACUMULADO
+    c1, c2 = st.columns(2)
+    
+    with c1:
         st.subheader("3. Resumen Avance Global Acumulado")
-        fig3 = px.area(df, x='Fecha', y='Físico Acum (%)', title="Curva S (Físico)", markers=True)
-        fig3.update_traces(line_color='#1E3A8A', fill_color='rgba(30, 58, 138, 0.3)')
+        fig3 = px.area(df, x='Fecha', y='Físico Acum (%)', title="Curva 'S' Física")
+        fig3.update_traces(line_color='#1E3A8A')
         st.plotly_chart(fig3, use_container_width=True)
+        
+        st.subheader("5. Curva Avance de Obra - Valor Ganado ($)")
+        fig5 = go.Figure()
+        fig5.add_trace(go.Scatter(x=df['Fecha'], y=df['Financiero Acum ($)'], name='Valor Ganado (EV)', line=dict(color='green', width=3)))
+        fig5.add_trace(go.Scatter(x=df['Fecha'], y=[MONTO_TOTAL_PROYECTO]*len(df), name='Presupuesto (BAC)', line=dict(dash='dash', color='red')))
+        st.plotly_chart(fig5, use_container_width=True)
 
-    with c_g2:
-        # 4. GRÁFICO DE AVANCE FÍSICO TOTAL POR MES
+    with c2:
         st.subheader("4. Avance Físico Total por Mes")
-        # Creamos una copia para manipular fechas
-        df_mes = df.copy()
-        df_mes['Fecha'] = pd.to_datetime(df_mes['Fecha'])
-        df_mes['Mes'] = df_mes['Fecha'].dt.strftime('%Y-%m')
-        # Agrupamos por mes sumando el avance del día
-        df_agrupado = df_mes.groupby('Mes')['Físico Diario (%)'].sum().reset_index()
+        # Agrupación Mensual
+        df_copia = df.copy()
+        df_copia['Mes'] = pd.to_datetime(df_copia['Fecha']).dt.strftime('%Y-%m')
+        df_agrupado = df_copia.groupby('Mes')['Físico Diario (%)'].sum().reset_index()
         
         fig4 = px.bar(df_agrupado, x='Mes', y='Físico Diario (%)', title="Producción Mensual (%)", text_auto='.2f')
         fig4.update_traces(marker_color='#b91c1c')
         st.plotly_chart(fig4, use_container_width=True)
-
-    # 5. CURVA DE AVANCE DE OBRA – VALOR GANADO
-    st.subheader("5. Curva de Avance de Obra – Valor Ganado ($)")
-    fig5 = go.Figure()
-    
-    # Valor Ganado (EV) - Lo que realmente se ha hecho en dinero
-    fig5.add_trace(go.Scatter(
-        x=df['Fecha'], y=df['Financiero Acum ($)'],
-        mode='lines+markers', name='Valor Ganado (EV)',
-        line=dict(color='green', width=3)
-    ))
-    
-    # Línea de Presupuesto Total (Referencia)
-    fig5.add_trace(go.Scatter(
-        x=df['Fecha'], y=[MONTO_TOTAL_PROYECTO]*len(df),
-        mode='lines', name='Presupuesto al finalizar (BAC)',
-        line=dict(color='gray', dash='dash')
-    ))
-
-    fig5.update_layout(title="Análisis de Valor Ganado", yaxis_title="Monto USD ($)", legend=dict(x=0, y=1))
-    st.plotly_chart(fig5, use_container_width=True)
