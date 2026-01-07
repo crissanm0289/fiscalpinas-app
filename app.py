@@ -24,9 +24,8 @@ datos_ficha = {
     "Link": "https://www.compraspublicas.gob.ec/ProcesoContratacion/compras/PC/resumenAdjudicacion.cpe?solicitud=V_550at-6mzyMx9KwoPuuaByned8HAHsT3R-uscx9wE,"
 }
 
-# --- GESTIÓN DE MEMORIA (DATAFRAME EXPANDIDO) ---
+# --- GESTIÓN DE MEMORIA (DATAFRAME) ---
 if 'data_fiscalpinas' not in st.session_state:
-    # Columnas nuevas añadidas para cumplir requerimientos
     st.session_state['data_fiscalpinas'] = pd.DataFrame({
         'Fecha': [date(2025, 1, 1)],
         'Día N': ['Inicio'],
@@ -36,13 +35,13 @@ if 'data_fiscalpinas' not in st.session_state:
         'Financiero Acum ($)': [0.0],
         'Hito Civil (%)': [0.0],
         'Hito Eléctrico (%)': [0.0],
-        'Horas Hombre': [0.0],          # Nuevo
-        'Personal Detalle': ['Inicio'], # Nuevo
-        'Incidentes': ['Sin Novedad'],  # Nuevo
-        'Contratos Comp': ['Ninguno'],  # Nuevo
-        'Ordenes Trabajo': ['Ninguna'], # Nuevo
-        'Incremento Cant': ['0.00'],    # Nuevo
-        'Control Cantidades': ['SI'],   # Nuevo
+        'Horas Hombre': [0.0],
+        'Personal Detalle': ['Inicio'],
+        'Incidentes': ['Sin Novedad'],
+        'Contratos Comp': ['Ninguno'],
+        'Ordenes Trabajo': ['Ninguna'],
+        'Incremento Cant': ['0.00'],
+        'Control Cantidades': ['SI'],
         'CPI': [1.0],
         'SPI': [1.0],
         'Detalle': ['Inicio de Contrato'],
@@ -123,10 +122,10 @@ if opcion == "MÓDULO 1: RDO (Ingreso)":
         c4.text_input("7. Datos Económicos del Contrato", "Fiscalización (Variable)", disabled=True)
         c5.text_input("8. Dato Económico total del Proyecto", datos_ficha['Monto_Str'], disabled=True)
 
-        # --- SECCIÓN B: AVANCE (CORREGIDO PUNTOS 11 y 15) ---
+        # --- SECCIÓN B: AVANCE ---
         st.info("B. Control de Avance y Valor Ganado")
         
-        # PUNTO 11: INPUT
+        # PUNTO 11
         col_m1, col_m2 = st.columns(2)
         in_monto_diario = col_m1.number_input("11. Curva de Avance $ ($ de Avance del día)", min_value=0.0, step=1000.0)
         
@@ -138,7 +137,7 @@ if opcion == "MÓDULO 1: RDO (Ingreso)":
 
         col_m2.metric("Avance Acumulado Proyectado", f"{nuevo_acum_fis:.4f} %", f"$ {nuevo_acum_fin:,.2f}")
 
-        # PUNTO 15: SIMBOLOGÍA VISUAL
+        # PUNTO 15: SIMBOLOGÍA
         st.markdown("**15. Curva de Avance – Valor Ganado – Simbología**")
         st.caption("Referencia visual del estado actual:")
         leyenda_col1, leyenda_col2, leyenda_col3 = st.columns(3)
@@ -147,13 +146,12 @@ if opcion == "MÓDULO 1: RDO (Ingreso)":
         leyenda_col3.markdown("🟥 **Costo Real (AC)**: Gasto Realizado")
         st.progress(int(nuevo_acum_fis))
 
-        # OTROS INDICADORES DE AVANCE
         st.markdown("**13. Avance prorrateado por Hito**")
         ch1, ch2 = st.columns(2)
         in_hito_civ = ch1.number_input("Hito Civil (%)", 0.0, 100.0, step=0.01)
         in_hito_ele = ch2.number_input("Hito Eléctrico (%)", 0.0, 100.0, step=0.01)
 
-        # --- SECCIÓN C: ADMINISTRATIVO Y RECURSOS (NUEVOS CAMPOS) ---
+        # --- SECCIÓN C: ADMINISTRATIVO Y RECURSOS ---
         st.info("C. Recursos, Seguridad y Administrativo")
         
         col_rec1, col_rec2, col_rec3 = st.columns(3)
@@ -213,14 +211,15 @@ elif opcion == "MÓDULO 2: DASHBOARD (Reporte)":
     dibujar_ficha_tecnica()
     df = st.session_state['data_fiscalpinas']
     
+    # Ignorar la fila 'Inicio' para los gráficos, si hay más datos
     if len(df) > 1:
-        df_real = df.iloc[1:].copy() # Ignoramos fila de inicio para gráficas
+        df_real = df.iloc[1:].copy()
     else:
         df_real = df.copy()
 
     st.markdown(f"**Fecha de Emisión:** {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     
-    # 2. TABLA RESUMEN (% Avance Acumulado)
+    # 2. TABLA RESUMEN
     st.subheader("2. Resumen de Avance Acumulado")
     cols_view = ['Fecha', 'Día N', 'Físico Acum (%)', 'Financiero Acum ($)', 'Horas Hombre', 'Incidentes']
     st.dataframe(df[cols_view].style.format({
@@ -231,12 +230,13 @@ elif opcion == "MÓDULO 2: DASHBOARD (Reporte)":
 
     st.markdown("---")
     
-    # --- FILA 1 DE GRÁFICOS ---
+    # --- FILA 1 ---
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("**3. Gráfico de Avance de Pagos (Acumulado $)**")
+        # CORRECCIÓN AQUÍ: Se eliminó fill_color='...' y se usó fillcolor='...'
         fig_pagos = px.area(df, x='Fecha', y='Financiero Acum ($)', markers=True)
-        fig_pagos.update_traces(line_color='green', fill_color='rgba(0,128,0,0.2)')
+        fig_pagos.update_traces(line_color='green', fillcolor='rgba(0,128,0,0.2)')
         st.plotly_chart(fig_pagos, use_container_width=True)
 
     with c2:
@@ -251,11 +251,10 @@ elif opcion == "MÓDULO 2: DASHBOARD (Reporte)":
         )
         st.plotly_chart(fig_dual, use_container_width=True)
 
-    # --- FILA 2 DE GRÁFICOS ---
+    # --- FILA 2 ---
     c3, c4 = st.columns(2)
     with c3:
         st.markdown("**5. Pagos Mensuales y Devengo de Anticipo**")
-        # Procesar datos mensuales
         df_real['Mes'] = pd.to_datetime(df_real['Fecha']).dt.strftime('%Y-%m')
         df_mes = df_real.groupby('Mes')['Inversión Diaria ($)'].sum().reset_index()
         
@@ -266,12 +265,11 @@ elif opcion == "MÓDULO 2: DASHBOARD (Reporte)":
     with c4:
         st.markdown("**6. Horas Hombre y Equipos (Acumulado)**")
         fig_hh = px.line(df, x='Fecha', y='Horas Hombre', markers=True, title="Recurso Humano Diario")
-        # Simular acumulación para la visualización
         df['HH_Acum'] = df['Horas Hombre'].cumsum()
         fig_hh.add_trace(go.Scatter(x=df['Fecha'], y=df['HH_Acum'], name='HH Acumuladas', fill='tozeroy', line=dict(dash='dot')))
         st.plotly_chart(fig_hh, use_container_width=True)
 
-    # --- FILA 3 DE GRÁFICOS ---
+    # --- FILA 3 ---
     c5, c6 = st.columns(2)
     with c5:
         st.markdown("**7. Frecuencia de Incidentes/Accidentes**")
